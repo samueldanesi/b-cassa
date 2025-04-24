@@ -40,7 +40,7 @@ app.post('/api/crea-azienda', async (req, res) => {
       },
       {
         headers: {
-          Authorization: `Bearer ${process.env.OPENAPI_KEY}`,
+            Authorization: `Bearer 67fff535b6f89ac63306bb35`, // ← metti qui la tua chiave vera
           'Content-Type': 'application/json'
         }
       }
