@@ -35,7 +35,7 @@ app.post('/api/crea-azienda', async (req, res) => {
         company_name: dati.ragioneSociale,
         contact_email: dati.email || 'no-reply@azienda.it',
         contact_phone: dati.telefono || '',
-        fiscal_code: dati.codiceFiscale,
+        fiscal_id: dati.codiceFiscale,
         address: dati.indirizzo,
       },
       {
