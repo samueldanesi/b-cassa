@@ -7,13 +7,14 @@ app.use(cors());
 app.use(express.json());
 
 const PORT = process.env.PORT || 3000;
+const OPENAPI_KEY = '680a692f17e7399b1404f3fa'; // ✅ Chiave SANDBOX Openapi
 
-const OPENAPI_KEY = '680a692f17e7399b1404f3fa';
-
+// ✔️ ROUTE DI TEST
 app.get('/', (req, res) => {
   res.send('✅ Backend SANDBOX attivo e funzionante!');
 });
 
+// ✔️ CREAZIONE CONFIGURAZIONE AZIENDA
 app.post('/api/crea-azienda', async (req, res) => {
   const dati = req.body;
 
@@ -37,8 +38,8 @@ app.post('/api/crea-azienda', async (req, res) => {
       {
         headers: {
           Authorization: `Bearer ${OPENAPI_KEY}`,
-          'Content-Type': 'application/json'
-        }
+          'Content-Type': 'application/json',
+        },
       }
     );
 
@@ -49,14 +50,22 @@ app.post('/api/crea-azienda', async (req, res) => {
     }
 
     console.error('❌ Errore creazione azienda:', errore.response?.data || errore.message);
-    res.status(500).json({ errore: 'Errore durante creazione azienda' });
+    res.status(500).json({ errore: 'Errore durante creazione azienda', dettaglio: errore.message });
   }
 });
 
+// ✔️ INVIO DELLO SCONTRINO
 app.post('/api/invia-scontrino', async (req, res) => {
   const dati = req.body;
 
-  if (!dati.partitaIva || !dati.prodotti || !dati.totale || !dati.data || !dati.ora) {
+  if (
+    !dati.partitaIva ||
+    !Array.isArray(dati.prodotti) ||
+    dati.prodotti.length === 0 ||
+    !dati.totale ||
+    !dati.data ||
+    !dati.ora
+  ) {
     return res.status(400).json({ errore: 'Dati dello scontrino mancanti o incompleti' });
   }
 
@@ -71,21 +80,24 @@ app.post('/api/invia-scontrino', async (req, res) => {
           description: p.nome,
           quantity: p.quantita,
           unit_price: p.prezzo,
-          vat_rate: p.iva
-        }))
+          vat_rate: p.iva,
+        })),
       },
       {
         headers: {
           Authorization: `Bearer ${OPENAPI_KEY}`,
-          'Content-Type': 'application/json'
-        }
+          'Content-Type': 'application/json',
+        },
       }
     );
 
     res.status(200).json({ success: true, dati: risposta.data });
   } catch (errore) {
     console.error('❌ Errore invio scontrino:', errore.response?.data || errore.message);
-    res.status(500).json({ errore: 'Errore durante invio scontrino' });
+    res.status(500).json({
+      errore: 'Errore durante invio scontrino',
+      dettaglio: errore.response?.data || errore.message,
+    });
   }
 });
 
