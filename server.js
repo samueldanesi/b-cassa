@@ -1,4 +1,3 @@
-require('dotenv').config();
 const express = require('express');
 const axios = require('axios');
 const cors = require('cors');
@@ -9,27 +8,22 @@ app.use(express.json());
 
 const PORT = process.env.PORT || 3000;
 
-// ✅ Test semplice
+const OPENAPI_KEY = '680a692f17e7399b1404f3fa';
+
 app.get('/', (req, res) => {
-  res.send('✅ Backend attivo e funzionante!');
+  res.send('✅ Backend SANDBOX attivo e funzionante!');
 });
 
-// ✅ Endpoint per creare azienda su Openapi
 app.post('/api/crea-azienda', async (req, res) => {
   const dati = req.body;
 
-  console.log('📩 Dati ricevuti dal client:', dati);
-  console.log('🔑 OPENAPI_KEY in uso:', process.env.OPENAPI_KEY);
-
   if (!dati.partitaIva || !dati.ragioneSociale || !dati.codiceFiscale || !dati.indirizzo) {
-    console.warn('⚠️ Dati mancanti:', dati);
     return res.status(400).json({ errore: 'Tutti i campi fiscali sono obbligatori' });
   }
 
   try {
-    console.log('📤 Invio richiesta a Openapi...');
     const risposta = await axios.post(
-      'https://invoice.openapi.com/IT-configurations',
+      'https://sandbox.openapi.com/IT-configurations',
       {
         tax_id: dati.partitaIva,
         email: dati.email,
@@ -42,32 +36,59 @@ app.post('/api/crea-azienda', async (req, res) => {
       },
       {
         headers: {
-            Authorization: `Bearer 67fff535b6f89ac63306bb35`, // ← metti qui la tua chiave vera
+          Authorization: `Bearer ${OPENAPI_KEY}`,
           'Content-Type': 'application/json'
         }
       }
     );
 
-    console.log('✅ Azienda registrata con successo:', risposta.data);
     res.status(200).json({ success: true, datiOpenapi: risposta.data });
-
   } catch (errore) {
-    console.error('❌ Errore Openapi:', errore.response?.data || errore.message);
-    console.error('📦 Errore completo:', {
-      status: errore.response?.status,
-      headers: errore.response?.headers,
-      data: errore.response?.data,
-    });
-
     if (errore.response?.status === 409) {
-      console.warn('⚠️ Azienda già presente su Openapi');
       return res.status(200).json({ success: true, messaggio: 'Azienda già presente su Openapi' });
     }
 
-    res.status(500).json({ errore: 'Errore durante creazione azienda su Openapi' });
+    console.error('❌ Errore creazione azienda:', errore.response?.data || errore.message);
+    res.status(500).json({ errore: 'Errore durante creazione azienda' });
+  }
+});
+
+app.post('/api/invia-scontrino', async (req, res) => {
+  const dati = req.body;
+
+  if (!dati.partitaIva || !dati.prodotti || !dati.totale || !dati.data || !dati.ora) {
+    return res.status(400).json({ errore: 'Dati dello scontrino mancanti o incompleti' });
+  }
+
+  try {
+    const risposta = await axios.post(
+      'https://sandbox.openapi.com/IT-receipts',
+      {
+        configuration_tax_id: dati.partitaIva,
+        receipt_date: dati.data,
+        receipt_time: dati.ora,
+        items: dati.prodotti.map(p => ({
+          description: p.nome,
+          quantity: p.quantita,
+          unit_price: p.prezzo,
+          vat_rate: p.iva
+        }))
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${OPENAPI_KEY}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+
+    res.status(200).json({ success: true, dati: risposta.data });
+  } catch (errore) {
+    console.error('❌ Errore invio scontrino:', errore.response?.data || errore.message);
+    res.status(500).json({ errore: 'Errore durante invio scontrino' });
   }
 });
 
 app.listen(PORT, () => {
-  console.log(`✅ Server avviato sulla porta ${PORT}`);
+  console.log(`✅ Server SANDBOX avviato sulla porta ${PORT}`);
 });
