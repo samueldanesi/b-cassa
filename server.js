@@ -32,6 +32,7 @@ app.post('/api/crea-azienda', async (req, res) => {
       'https://invoice.openapi.com/IT-configurations',
       {
         tax_id: dati.partitaIva,
+        email: dati.email,
         company_name: dati.ragioneSociale,
         name: dati.ragioneSociale,
         contact_email: dati.email || 'no-reply@azienda.it',
